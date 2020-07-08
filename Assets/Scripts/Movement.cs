@@ -4,37 +4,48 @@ using UnityEngine;
 
 public class Movement : MonoBehaviour
 {
+	public LayerMask _groundLayerMask;
 	public float walkSpeed = 5;
 	public float jumpSpeed = 15;
 
+	public bool isGrounded = false;
+
 	private Rigidbody2D _rigidbody2D;
 
-    // Start is called before the first frame update
-    void Start()
-    {
+	// Start is called before the first frame update
+	void Start()
+	{
 		_rigidbody2D = gameObject.GetComponent<Rigidbody2D>();
-    }
+	}
 
-    // Update is called once per frame
-    void Update()
-    {
+	// Update is called once per frame
+	void Update()
+	{
 		bool isLeftPressed = Input.GetKey(KeyCode.A);
 		bool isRightPressed = Input.GetKey(KeyCode.D);
-		//bool isJumping = Input.GetKey(KeyCode.Space);
+		bool isJumping = Input.GetKey(KeyCode.Space);
 
-		if (isLeftPressed)
-			_rigidbody2D.velocity = new Vector2(-walkSpeed, _rigidbody2D.velocity.y);
-		else if (isRightPressed)
-			_rigidbody2D.velocity = new Vector2(walkSpeed, _rigidbody2D.velocity.y);
+		Vector2 velocityUpdate = _rigidbody2D.velocity;
+
+		if (_rigidbody2D.IsTouchingLayers(_groundLayerMask))
+			isGrounded = true;
 		else
-			_rigidbody2D.velocity = new Vector2(0, _rigidbody2D.velocity.y);
+			isGrounded = false;
 
-		/*if (isJumping && _rigidbody2D.IsTouchingLayers(LayerMask.GetMask(new string[] { "Ground" })))
-			_rigidbody2D.velocity = new Vector2(_rigidbody2D.velocity.x, jumpSpeed);
-
-		if (!_rigidbody2D.IsTouchingLayers(LayerMask.GetMask(new string[] { "Ground" })))
-			_rigidbody2D.velocity = new Vector2(_rigidbody2D.velocity.x, _rigidbody2D.velocity.y + Physics2D.gravity.y);
+		if (isLeftPressed && !isRightPressed)
+			velocityUpdate.x = -walkSpeed;
+		else if (isRightPressed && !isLeftPressed)
+			velocityUpdate.x = walkSpeed;
 		else
-			_rigidbody2D.velocity = new Vector2(_rigidbody2D.velocity.x, 0);*/
+			velocityUpdate.x = 0;
+
+		if (!isJumping && isGrounded)
+			velocityUpdate.y = 0;
+		else if (isJumping && isGrounded)
+			velocityUpdate.y = jumpSpeed;
+		else
+			velocityUpdate.y += Physics2D.gravity.y * Time.deltaTime;
+
+		_rigidbody2D.velocity = velocityUpdate;
 	}
 }
