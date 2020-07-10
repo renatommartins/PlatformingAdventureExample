@@ -4,10 +4,13 @@ using UnityEngine;
 
 public class Movement : MonoBehaviour
 {
+	public LayerMask _groundLayerMask;
 	public float walkSpeed = 5;
 	public float jumpSpeed = 15;
 	public int maxJumps = 2;
 	public LayerMask groundLayers;
+
+	public bool isGrounded = false;
 
 	private Rigidbody2D _rigidbody2D;
 	private bool _isGrounded = false;
@@ -19,7 +22,7 @@ public class Movement : MonoBehaviour
     {
 		// Get Rigidbody2D instance from current GameObject.
 		_rigidbody2D = gameObject.GetComponent<Rigidbody2D>();
-    }
+	}
 
     // Update is called once per frame
     void Update()
