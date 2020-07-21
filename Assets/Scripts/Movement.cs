@@ -4,18 +4,21 @@ using UnityEngine;
 
 public class Movement : MonoBehaviour
 {
-	public LayerMask _groundLayerMask;
 	public float walkSpeed = 5;
 	public float jumpSpeed = 15;
 	public int maxJumps = 2;
-	public LayerMask groundLayers;
+	[Space(20)]
 
-	public bool isGrounded = false;
+	public Collider2D groundHitbox;
+	public LayerMask groundLayers;
 
 	private Rigidbody2D _rigidbody2D;
 	private bool _isGrounded = false;
 	private int _remainingJumps = 0;
 	private float _leaveGroundTime = 0;
+
+	public Vector2 Speed { get; private set; }
+	public bool IsGrounded { get; private set; }
 
     // Start is called before the first frame update
     void Start()
@@ -24,8 +27,36 @@ public class Movement : MonoBehaviour
 		_rigidbody2D = gameObject.GetComponent<Rigidbody2D>();
 	}
 
-    // Update is called once per frame
-    void Update()
+	private void OnCollisionEnter2D(Collision2D collision)
+	{
+		CheckGrounded(collision);
+	}
+
+	private void OnCollisionStay2D(Collision2D collision)
+	{
+		CheckGrounded(collision);
+	}
+
+	// Checks if character is grounded accounting for grace time when just jumped
+	private void CheckGrounded(Collision2D collision)
+	{
+		if (Vector2.Dot(collision.contacts[0].normal, Vector2.up) > 0.6 && (_leaveGroundTime + 0.2f) - Time.time < 0)
+		{
+			_isGrounded = true;
+			_remainingJumps = maxJumps;
+
+			//Debug.Log($"contact ground : {Vector2.Dot(collision.contacts[0].normal, Vector2.up)}");
+		}
+	}
+
+	private void OnCollisionExit2D(Collision2D collision)
+	{
+		if(_isGrounded)
+			_isGrounded = false;
+	}
+
+	// Update is called once per frame
+	void Update()
     {
 		// Read input from player (ONLY READS INPUT FROM ONE PLAYER).
 		bool isLeftPressed = Input.GetKey(KeyCode.A);
@@ -34,16 +65,6 @@ public class Movement : MonoBehaviour
 
 		// New velocity temporary vector.
 		Vector2 newVelocity = _rigidbody2D.velocity;
-
-		// Checks if character is grounded accounting for grace time when just jumped
-		if (_rigidbody2D.IsTouchingLayers(groundLayers) && 
-			(_leaveGroundTime + 0.2f) - Time.time < 0)
-		{
-			_isGrounded = true;
-			_remainingJumps = maxJumps;
-		}
-		else
-			_isGrounded = false;
 
 		// Calculates horizontal movement.
 		if (isLeftPressed && !isRightPressed)
@@ -66,6 +87,7 @@ public class Movement : MonoBehaviour
 			newVelocity.y = jumpSpeed;
 			_remainingJumps--;
 
+			_isGrounded = false;
 			_leaveGroundTime = Time.time;
 		}
 		// When player press jump and not on ground and
@@ -77,7 +99,7 @@ public class Movement : MonoBehaviour
 		if (isJumping && 
 			!_isGrounded && 
 			_remainingJumps > 0 && 
-			newVelocity.y < -2.5f)
+			newVelocity.y < 0)
 		{
 			newVelocity.y = jumpSpeed;
 			_remainingJumps--;
@@ -86,6 +108,9 @@ public class Movement : MonoBehaviour
 		// Apply gravity.
 		else
 			newVelocity.y += Physics2D.gravity.y * Time.deltaTime;
+
+		IsGrounded = _isGrounded;
+		Speed = newVelocity;
 
 		// Apply calculated velocity to character's Rigidbody2D
 		_rigidbody2D.velocity = newVelocity;
