@@ -4,18 +4,21 @@ using UnityEngine;
 
 public class Movement : MonoBehaviour
 {
-	public LayerMask _groundLayerMask;
 	public float walkSpeed = 5;
 	public float jumpSpeed = 15;
 	public int maxJumps = 2;
-	public LayerMask groundLayers;
+	[Space(20)]
 
-	public bool isGrounded = false;
+	public Collider2D groundHitbox;
+	public LayerMask groundLayers;
 
 	private Rigidbody2D _rigidbody2D;
 	private bool _isGrounded = false;
 	private int _remainingJumps = 0;
 	private float _leaveGroundTime = 0;
+
+	public Vector2 Speed { get; private set; }
+	public bool IsGrounded { get; private set; }
 
     // Start is called before the first frame update
     void Start()
@@ -100,7 +103,7 @@ public class Movement : MonoBehaviour
 		if (isJumping && 
 			!_isGrounded && 
 			_remainingJumps > 0 && 
-			newVelocity.y < -2.5f)
+			newVelocity.y < 0)
 		{
 			newVelocity.y = jumpSpeed;
 			_remainingJumps--;
@@ -109,6 +112,9 @@ public class Movement : MonoBehaviour
 		// Apply gravity.
 		else
 			newVelocity.y += Physics2D.gravity.y * Time.deltaTime;
+
+		IsGrounded = _isGrounded;
+		Speed = newVelocity;
 
 		// Apply calculated velocity to character's Rigidbody2D
 		_rigidbody2D.velocity = newVelocity;
