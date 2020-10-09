@@ -4,6 +4,15 @@ using UnityEngine;
 
 public class Movement : MonoBehaviour
 {
+	enum PlayerStates
+	{
+		Idle,
+		LowStaminaIdle,
+		Running,
+		Jumping,
+		Falling
+	}
+
 	public float walkSpeed = 5;
 	public float jumpSpeed = 15;
 	public int maxJumps = 2;
@@ -17,6 +26,9 @@ public class Movement : MonoBehaviour
 	private int _remainingJumps = 0;
 	private float _leaveGroundTime = 0;
 
+	private PlayerStates _state = PlayerStates.Idle;
+	private Animator _animator = null;
+
 	public Vector2 Speed { get; private set; }
 	public bool IsGrounded { get; private set; }
 
@@ -25,6 +37,7 @@ public class Movement : MonoBehaviour
     {
 		// Get Rigidbody2D instance from current GameObject.
 		_rigidbody2D = gameObject.GetComponent<Rigidbody2D>();
+		_animator = gameObject.GetComponent<Animator>();
 	}
 
 	private void OnCollisionEnter2D(Collision2D collision)
@@ -118,5 +131,60 @@ public class Movement : MonoBehaviour
 
 		// Apply calculated velocity to character's Rigidbody2D
 		_rigidbody2D.velocity = newVelocity;
+
+		if (newVelocity.y > 0.1)
+			_state = PlayerStates.Jumping;
+		else if (newVelocity.y < -0.1)
+			_state = PlayerStates.Falling;
+		else if (newVelocity.x < 0)
+			_state = PlayerStates.Running;
+		else if (newVelocity.x > 0)
+			_state = PlayerStates.Running;
+		else
+			_state = PlayerStates.Idle;
+
+		if (newVelocity.x < 0)
+			transform.localScale = new Vector3(-6, 6, 1);
+		else if (newVelocity.x > 0)
+			transform.localScale = new Vector3(6, 6, 1);
+
+		switch (_state)
+		{
+			case PlayerStates.Idle:
+				_animator.SetBool("isIdle", true);
+				_animator.SetBool("isRunning", false);
+				_animator.SetBool("isJumping", false);
+				_animator.SetBool("isFalling", false);
+				_animator.SetBool("isLowStamina", false);
+				break;
+			case PlayerStates.LowStaminaIdle:
+				_animator.SetBool("isIdle", true);
+				_animator.SetBool("isRunning", false);
+				_animator.SetBool("isJumping", false);
+				_animator.SetBool("isFalling", false);
+				_animator.SetBool("isLowStamina", true);
+				break;
+			case PlayerStates.Running:
+				_animator.SetBool("isIdle", false);
+				_animator.SetBool("isRunning", true);
+				_animator.SetBool("isJumping", false);
+				_animator.SetBool("isFalling", false);
+				_animator.SetBool("isLowStamina", false);
+				break;
+			case PlayerStates.Jumping:
+				_animator.SetBool("isIdle", false);
+				_animator.SetBool("isRunning", false);
+				_animator.SetBool("isJumping", true);
+				_animator.SetBool("isFalling", false);
+				_animator.SetBool("isLowStamina", false);
+				break;
+			case PlayerStates.Falling:
+				_animator.SetBool("isIdle", false);
+				_animator.SetBool("isRunning", false);
+				_animator.SetBool("isJumping", false);
+				_animator.SetBool("isFalling", true);
+				_animator.SetBool("isLowStamina", false);
+				break;
+		}
 	}
 }
